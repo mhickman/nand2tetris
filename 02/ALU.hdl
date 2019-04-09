@@ -42,5 +42,39 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+    // The part zeroing out the ALU
+    Mux16(a=x, b=false, sel=zx, out=zxout);
+    Mux16(a=y, b=false, sel=zy, out=zyout);
+
+    // Negate the inputs
+    Not16(in=zxout, out=nxout);
+    Not16(in=zyout, out=nyout);
+
+    // Select negation or not
+    Mux16(a=zxout, b=nxout, sel=nx, out=fxin);
+    Mux16(a=zyout, b=nyout, sel=ny, out=fyin);
+
+    // Compute addition
+    Add16(a=fxin, b=fyin, out=added);
+
+    // Compute the AND
+    And16(a=fxin, b=fyin, out=anded);
+
+    // Select addition or not
+    Mux16(a=anded, b=added, sel=f, out=preout);
+
+    Not16(in=preout, out=negatedout);
+    Mux16(a=preout, b=negatedout, sel=no, out=out, out[15]=isnegative, out[0..7]=part1, out[8..15]=part2);
+
+    // Stat bits
+    
+    // Negation bit first
+    // The MSB is set if it is negative
+    Mux(a=false, b=true, sel=isnegative, out=ng);
+
+    Or8Way(in=part1, out=part1nonzero);
+    Or8Way(in=part2, out=part2nonzero);
+
+    Or(a=part1nonzero, b=part2nonzero, out=nonzero);
+    Not(in=nonzero, out=zr);
 }
